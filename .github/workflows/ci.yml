@@ -1,0 +1,39 @@
+name: Java CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Frontend money conversion tests
+        run: node --test src/test/frontend/*.test.mjs
+      - name: Test and package (no OpenAI calls)
+        run: bash gradlew check bootJar --no-daemon
+      - name: Upload test and coverage reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: verification-reports
+          path: |
+            build/reports/tests/test
+            build/reports/jacoco/test
+      - name: Upload executable JAR
+        uses: actions/upload-artifact@v4
+        with:
+          name: budgeting-jar
+          path: build/libs/*.jar

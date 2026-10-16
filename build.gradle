@@ -1,0 +1,70 @@
+plugins {
+    id 'java'
+    id 'jacoco'
+    id 'org.springframework.boot' version '4.0.5'
+    id 'io.spring.dependency-management' version '1.1.7'
+    id("io.freefair.lombok") version "9.2.0"
+
+}
+
+group = 'dio'
+version = '0.0.1-SNAPSHOT'
+description = 'budgeting'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    implementation platform("org.springframework.ai:spring-ai-bom:2.0.0-M4")
+    implementation 'org.springframework.ai:spring-ai-starter-model-openai'
+
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+
+    runtimeOnly 'com.h2database:h2'
+
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    runtimeOnly 'com.mysql:mysql-connector-j'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+    exclude '**/*IT.class'
+    finalizedBy tasks.jacocoTestReport
+}
+
+jacoco { toolVersion = '0.8.14' }
+
+jacocoTestReport {
+    dependsOn test
+    reports {
+        xml.required = true
+        html.required = true
+    }
+}
+
+tasks.register('integrationTest', Test) {
+    description = 'Executa exemplos que chamam a OpenAI (requer chave e pode gerar custos).'
+    group = 'verification'
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    useJUnitPlatform()
+    include '**/*IT.class'
+}
+
+// Separate artifact keeps the audio test independent from a running preview.
+tasks.named('bootJar') {
+    if (project.hasProperty('audioTestArchive')) { archiveFileName = 'budgeting-audio.jar' }
+    if (project.hasProperty('freeTestArchive')) { archiveFileName = 'budgeting-free.jar' }
+}

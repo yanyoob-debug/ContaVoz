@@ -1,0 +1,297 @@
+openapi: 3.0.3
+info:
+  title: Budgeting Voice API
+  version: 1.0.0
+  description: >-
+    API educacional de gastos com Spring AI. Valores de transações são centavos.
+    O perfil demo desativa POST /transactions/ai. Sem autenticação nesta versão.
+servers:
+  - url: http://localhost:8080
+tags:
+  - name: Transactions
+  - name: Voice
+  - name: Operations
+paths:
+  /api/config:
+    get:
+      tags: [Operations]
+      operationId: applicationInfo
+      summary: Informa ao frontend se o perfil demo e o áudio estão ativos
+      responses:
+        '200':
+          description: Configuração pública sem credenciais
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [aiEnabled, demo]
+                properties:
+                  aiEnabled: {type: boolean}
+                  demo: {type: boolean}
+  /transactions:
+    post:
+      tags: [Transactions]
+      operationId: createTransaction
+      summary: Cadastra um gasto
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTransaction'
+            example: {description: Compra no mercado, category: GROCERIES, amount: 1250}
+      responses:
+        '201':
+          description: Gasto cadastrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transaction'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+    get:
+      tags: [Transactions]
+      operationId: listTransactions
+      summary: Lista gastos com paginação e filtro opcional
+      description: Sem month, retorna todos os períodos em ordem de UUID. Com month, retorna apenas o mês informado em ordem decrescente de data e depois UUID.
+      parameters:
+        - $ref: '#/components/parameters/MonthQuery'
+        - name: category
+          in: query
+          schema:
+            $ref: '#/components/schemas/Category'
+        - name: page
+          in: query
+          schema: {type: integer, minimum: 0, default: 0}
+        - name: size
+          in: query
+          schema: {type: integer, minimum: 1, maximum: 100, default: 20}
+      responses:
+        '200':
+          description: Página de gastos
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items, page, size, totalElements, totalPages]
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Transaction'
+                  page: {type: integer}
+                  size: {type: integer}
+                  totalElements: {type: integer, format: int64}
+                  totalPages: {type: integer, format: int64}
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /transactions/{identifier}:
+    get:
+      tags: [Transactions]
+      operationId: listByCategory
+      summary: Lista todos os gastos da categoria (compatibilidade)
+      description: Para novas integrações, prefira GET /transactions com paginação.
+      parameters:
+        - name: identifier
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Category'
+      responses:
+        '200':
+          description: Gastos da categoria
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Transaction'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+    put:
+      tags: [Transactions]
+      operationId: updateTransaction
+      summary: Altera descrição, valor e categoria de um gasto
+      parameters:
+        - $ref: '#/components/parameters/TransactionIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTransaction'
+      responses:
+        '200':
+          description: Transação atualizada com o mesmo identificador
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transaction'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Transactions]
+      operationId: deleteTransaction
+      summary: Exclui um gasto pelo UUID
+      parameters:
+        - $ref: '#/components/parameters/TransactionIdPath'
+      responses:
+        '204':
+          description: Gasto excluído; resposta sem corpo
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /transactions/{category}/summary:
+    get:
+      tags: [Transactions]
+      operationId: summarizeCategory
+      summary: Consulta quantidade e total de gastos por categoria
+      parameters:
+        - $ref: '#/components/parameters/CategoryPath'
+        - $ref: '#/components/parameters/MonthQuery'
+      responses:
+        '200':
+          description: Resumo; totais zerados quando não houver gastos
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [category, count, totalInCents, totalInReais]
+                properties:
+                  category:
+                    $ref: '#/components/schemas/Category'
+                  count: {type: integer, format: int64}
+                  totalInCents: {type: number, example: 1250}
+                  totalInReais: {type: number, example: 12.50}
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /transactions/ai:
+    post:
+      tags: [Voice]
+      operationId: processVoiceCommand
+      summary: Processa comando de áudio e devolve MP3
+      description: >-
+        Requer chave do provedor. Desativado no perfil demo. Reenvios podem duplicar gastos.
+        Em caso de falha, consulte as transações antes de repetir o comando.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Arquivo não vazio de até 10 MB em formato suportado pelo provedor
+      responses:
+        '200':
+          description: Resposta falada
+          content:
+            audio/mpeg:
+              schema: {type: string, format: binary}
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '413':
+          description: Arquivo excede o limite de tamanho
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '502':
+          description: Falha no fluxo de IA; uma transação pode já ter sido salva
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+  /actuator/health:
+    get:
+      tags: [Operations]
+      operationId: health
+      summary: Saúde da aplicação e do banco; não verifica a OpenAI
+      responses:
+        '200':
+          description: Aplicação saudável
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: {type: string, example: UP}
+        '503':
+          description: Aplicação indisponível
+components:
+  parameters:
+    MonthQuery:
+      name: month
+      in: query
+      required: false
+      description: Mês dos gastos. Sem esse parâmetro, inclui todos os períodos e registros sem data.
+      schema:
+        type: string
+        pattern: '^[0-9]{4}-(0[1-9]|1[0-2])$'
+        example: '2026-10'
+    TransactionIdPath:
+      name: identifier
+      in: path
+      required: true
+      description: UUID do gasto a editar ou excluir
+      schema: {type: string, format: uuid}
+    CategoryPath:
+      name: category
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/Category'
+  responses:
+    NotFound:
+      description: Transação não encontrada
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    BadRequest:
+      description: Entrada inválida
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+  schemas:
+    Category:
+      type: string
+      description: GROCERIES = Alimentação; PHARMA = Saúde; AUTO = Locomoção; LEISURE = Lazer; UNEXPECTED = Imprevistos.
+      enum: [GROCERIES, PHARMA, AUTO, LEISURE, UNEXPECTED]
+    CreateTransaction:
+      type: object
+      required: [description, category, amount]
+      properties:
+        description: {type: string, minLength: 1, maxLength: 255}
+        category:
+          $ref: '#/components/schemas/Category'
+        amount: {type: integer, format: int64, minimum: 1, description: Valor em centavos}
+        date:
+          type: string
+          format: date
+          nullable: true
+          example: '2026-10-16'
+          description: Data do gasto. No cadastro, ausência ou null usa hoje em São Paulo. Na edição, ausência ou null preserva a data anterior. Registros legados podem ter date null.
+    Transaction:
+      allOf:
+        - $ref: '#/components/schemas/CreateTransaction'
+        - type: object
+          required: [id]
+          properties:
+            id: {type: string, format: uuid}
+    Problem:
+      type: object
+      properties:
+        type: {type: string}
+        title: {type: string}
+        status: {type: integer}
+        detail: {type: string}
+        instance: {type: string}
+        stage: {type: string, enum: [transcription, interpretation, speech]}

@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f57900">
+  <meta name="description" content="Painel de gastos, transações e comandos de áudio com Spring AI.">
+  <title>Budgeting Voice · Painel de gastos</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/theme.css">
+  <script src="/app.js?v=free-voice-1" type="module"></script>
+</head>
+<body>
+<svg class="icon-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></symbol>
+  <symbol id="i-wallet" viewBox="0 0 24 24"><path d="M20 8V5a2 2 0 0 0-2-2L5 5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h15V8H5a2 2 0 0 1 0-4"/><path d="M20 12h-5v5h5"/></symbol>
+  <symbol id="i-mic" viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="13" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3m-4 0h8"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M7 17 17 7M7 7h10v10"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 7v5h-5M4 17v-5h5M6 7a7 7 0 0 1 12-1l2 6M4 12l2 6a7 7 0 0 0 12-1"/></symbol>
+  <symbol id="i-bag" viewBox="0 0 24 24"><path d="M5 7h14l2 14H3L5 7Zm3 0V6a4 4 0 0 1 8 0v1"/></symbol>
+  <symbol id="i-cross" viewBox="0 0 24 24"><path d="M9 3h6v6h6v6h-6v6H9v-6H3V9h6V3Z"/></symbol>
+  <symbol id="i-car" viewBox="0 0 24 24"><path d="m5 9 2-6h10l2 6M3 9h18v9H3V9Zm2 9v3m14-3v3M6 13h2m8 0h2"/></symbol>
+  <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 16V3m-5 5 5-5 5 5M4 16v5h16v-5"/></symbol>
+  <symbol id="i-code" viewBox="0 0 24 24"><path d="m8 6-6 6 6 6m8-12 6 6-6 6m-3-16-2 20"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></symbol>
+  <symbol id="i-gamepad" viewBox="0 0 24 24"><path d="M7 7h10l4 10a2 2 0 0 1-3 2l-3-3H9l-3 3a2 2 0 0 1-3-2L7 7ZM7 10v4m-2-2h4m7-1h.01m2 2h.01"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="m12 3 10 18H2L12 3Zm0 6v5m0 3h.01"/></symbol>
+</svg>
+<a class="skip-link" href="#main">Pular para o conteúdo</a>
+<aside class="sidebar">
+  <a href="#overview" class="brand" aria-label="Budgeting Voice, início"><span class="brand-mark"><i></i><i></i><i></i><i></i></span><span>budgeting<span class="brand-sub">VOICE</span></span></a>
+  <div class="nav-label">NAVEGAÇÃO</div>
+  <nav aria-label="Navegação principal">
+    <a class="nav-item active" href="#overview"><svg><use href="#i-grid"/></svg>Visão geral</a>
+    <a class="nav-item" href="#transactions"><svg><use href="#i-wallet"/></svg>Transações</a>
+    <a class="nav-item" href="#voice"><svg><use href="#i-mic"/></svg>Assistente de voz<span class="ai-tag">AI</span></a>
+  </nav>
+  <div class="sidebar-bottom"><a href="/openapi.yaml" target="_blank" rel="noopener"><svg><use href="#i-code"/></svg>Documentação da API ↗</a><div class="built-with">Desenvolvido com Java + Spring AI</div></div>
+</aside>
+<div class="workspace">
+  <header class="topbar"><div><span class="breadcrumb">Meu orçamento</span><span class="breadcrumb-separator">/</span><strong id="view-name">Visão geral</strong></div><div class="connection"><span id="connection-dot" class="status-dot"></span><span id="connection-label">Conectando</span></div></header>
+  <main id="main">
+    <section id="overview" class="intro"><div><h1><span>Visão</span> geral</h1><p>Resumo mensal de gastos e transações por categoria.</p></div><button class="button primary" id="new-transaction"><svg><use href="#i-plus"/></svg>Novo gasto</button></section>
+    <div id="demo-notice" class="demo-notice" hidden><span class="notice-dot"></span><strong>Você está no modo demonstração</strong><span>Os dados são fictícios e reiniciam ao encerrar a aplicação.</span></div>
+    <section class="period-controls" aria-label="Período do painel">
+  <div class="period-toolbar">
+    <div class="period-heading">
+      <span class="period-symbol" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M7 3v4m10-4v4M3 11h18m-13 4h2m4 0h2"/></svg></span>
+      <div><h2>Período</h2><small id="period-feedback" role="status" aria-live="polite"></small></div>
+    </div>
+    <div class="period-mode-field"><label class="sr-only" for="period-mode">Visualização</label><select id="period-mode"><option value="month">Mensal</option><option value="all">Todos os períodos</option></select></div>
+  </div>
+  <form id="period-form" class="period-form">
+    <div class="period-navigation">
+      <button id="previous-month" class="period-arrow" type="button" aria-label="Mês anterior" title="Mês anterior">←</button>
+      <div class="period-field"><label for="period-month">Mês</label><select id="period-month"><option value="01">Janeiro</option><option value="02">Fevereiro</option><option value="03">Março</option><option value="04">Abril</option><option value="05">Maio</option><option value="06">Junho</option><option value="07">Julho</option><option value="08">Agosto</option><option value="09">Setembro</option><option value="10">Outubro</option><option value="11">Novembro</option><option value="12">Dezembro</option></select></div>
+      <div class="period-field year-field"><label for="period-year">Ano</label><input id="period-year" name="year" type="number" min="1" max="9999" step="1" inputmode="numeric" placeholder="2026" required></div>
+      <button id="next-month" class="period-arrow" type="button" aria-label="Próximo mês" title="Próximo mês">→</button>
+    </div>
+    <div class="period-actions"><button id="current-month" class="button secondary" type="button">Mês atual</button><button id="apply-period" class="button primary" type="submit">Aplicar</button></div>
+  </form>
+</section>
+    <div id="load-error" class="error-banner" role="alert" hidden></div>
+    <section class="metric-grid" aria-label="Resumo de gastos" aria-busy="true" id="metrics">
+      <article class="metric-card total-card"><div class="metric-label">Total de gastos <svg><use href="#i-wallet"/></svg></div><div class="metric-value" id="total-spent">—</div><div class="metric-footer"><span class="total-dot"></span><span id="metric-period">Mês atual</span></div><div class="card-decoration" aria-hidden="true"></div></article>
+      <article class="metric-card"><div class="metric-label">Transações registradas <span class="metric-icon mint"><svg><use href="#i-grid"/></svg></span></div><div class="metric-value" id="total-count">—</div><div class="metric-footer">Total de registros</div></article>
+      <article class="metric-card"><div class="metric-label">Maior categoria <span class="metric-icon peach"><svg><use href="#i-arrow"/></svg></span></div><div class="metric-value category-value" id="top-category">—</div><div class="metric-footer" id="top-category-detail">Distribuição dos seus gastos</div></article>
+    </section>
+    <div class="insight-grid">
+      <section class="panel category-panel" aria-labelledby="category-title"><div class="panel-header"><div><h2 id="category-title">Gastos por categoria</h2><p id="chart-description">Gastos do mês selecionado</p></div><span class="subtle-pill" id="chart-period">Mês atual</span></div><div class="category-content"><div class="donut-wrap"><div class="donut" id="category-donut" role="img" aria-label="Carregando distribuição"><div><span>GASTOS</span><strong id="donut-count">—</strong><small id="donut-count-label">lançamentos</small></div></div></div><div class="category-legend" id="category-legend"><p class="muted">Carregando categorias…</p></div></div></section>
+      <section id="voice" class="panel voice-panel" aria-labelledby="voice-title"><div class="voice-title"><span class="voice-icon"><svg><use href="#i-mic"/></svg></span><span class="voice-badge">DITADO SEM CHAVE</span></div><h2 id="voice-title">Comandos de áudio</h2><p>Grave sua fala ou escolha um áudio para registrar um gasto ou consultar suas transações.</p><div class="voice-example">“Gastei cinquenta reais no mercado.”<span class="sound-bars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span></div><div class="free-voice"><p>Dite um gasto, revise os dados e confirme para salvar. Sem chave ou chamadas à OpenAI.</p><button class="button primary voice-button" id="free-dictate" type="button">Ditar gasto sem OpenAI</button><label for="free-transcript">Comando reconhecido (você pode corrigir)</label><textarea id="free-transcript" rows="3" maxlength="255" placeholder="Gastei cinquenta reais no mercado hoje"></textarea><button class="button primary voice-button" id="free-review" type="button" disabled>Revisar gasto</button><p id="free-status" class="voice-status" role="status" aria-live="polite"></p><p class="voice-hint">O ditado depende do navegador e pode enviar a fala ao serviço de reconhecimento dele. Pode exigir internet. Você também pode digitar o comando.</p></div><details class="paid-voice"><summary>Integração com OpenAI (opcional, pode gerar custos)</summary><div id="voice-demo" class="voice-demo" hidden></div><form id="voice-form"><button class="button voice-button" id="record-audio" type="button" disabled><svg><use href="#i-mic"/></svg><span id="record-label">Gravar pelo microfone</span></button><p id="record-hint" class="voice-hint">Clique para gravar, permita o microfone e depois clique em Parar gravação. Limite: 60 segundos.</p><div id="audio-confirmation" class="audio-confirmation" hidden><strong>Áudio pronto. Está tudo certo?</strong><audio id="record-preview" controls hidden aria-label="Ouvir gravação antes de enviar"></audio><p>Confirme para a IA executar seu comando e registrar o gasto informado.</p><button class="button primary voice-button" id="send-audio" type="submit" disabled><svg><use href="#i-mic"/></svg><span id="send-audio-label">Confirmar e enviar áudio</span></button></div><span class="audio-divider">ou envie um arquivo</span><label class="upload-zone" id="upload-zone" for="audio-file"><svg><use href="#i-upload"/></svg><span id="file-label">Escolher arquivo de áudio</span><small>MP3, WAV ou M4A · até 10 MB</small><input id="audio-file" name="file" type="file" accept="audio/*,.m4a,.mp3,.wav,.webm" aria-describedby="voice-hint"></label><p id="voice-hint" class="voice-hint">Ouça a gravação e clique em Confirmar e enviar áudio. Só então o áudio será enviado à IA. Reenvios podem duplicar gastos.</p></form><p id="voice-status" class="voice-status" role="status" aria-live="polite"></p><audio id="voice-response" controls hidden aria-label="Resposta do assistente"></audio></details></section>
+    </div>
+    <section id="transactions" class="panel transactions-panel" aria-labelledby="transactions-title"><div class="panel-header transaction-heading"><div><h2 id="transactions-title">Suas transações</h2><p>Consulte os registros e filtre por categoria.</p></div><div class="table-tools"><label class="sr-only" for="category-filter">Filtrar transações por categoria</label><select id="category-filter"><option value="">Todas as categorias</option><option value="GROCERIES">Alimentação</option><option value="PHARMA">Saúde</option><option value="AUTO">Locomoção</option><option value="LEISURE">Lazer</option><option value="UNEXPECTED">Imprevistos</option></select><button id="refresh" class="icon-button" aria-label="Atualizar dados" title="Atualizar dados"><svg><use href="#i-refresh"/></svg></button></div></div><div class="table-scroll"><table><thead><tr><th scope="col">DESCRIÇÃO</th><th scope="col">DATA</th><th scope="col">CATEGORIA</th><th scope="col" class="amount-cell">VALOR</th><th scope="col" class="actions-cell">AÇÕES</th></tr></thead><tbody id="transaction-rows"><tr><td colspan="5" class="table-state">Carregando transações…</td></tr></tbody></table></div><footer class="table-footer"><span id="page-info" aria-live="polite">Carregando…</span><div class="pagination"><button id="previous-page" class="page-button" aria-label="Página anterior" disabled>←</button><span id="page-number">1</span><button id="next-page" class="page-button" aria-label="Próxima página" disabled>→</button></div></footer></section>
+    <footer class="page-footer"><span>Valores em reais (BRL).</span><span>Budgeting Voice <span class="footer-dot">•</span> Spring Boot + Spring AI</span></footer>
+  </main>
+</div>
+<dialog id="transaction-dialog" aria-labelledby="dialog-title"><form id="transaction-form"><div class="dialog-heading"><span class="dialog-icon"><svg><use href="#i-plus"/></svg></span><button type="button" id="close-dialog" class="icon-button" aria-label="Fechar formulário"><svg><use href="#i-close"/></svg></button></div><h2 id="dialog-title">Novo gasto</h2><p class="muted">Informe a descrição, o valor e a categoria.</p><label for="description">Descrição</label><input id="description" name="description" placeholder="Ex.: Compras da semana" maxlength="255" required autocomplete="off"><div class="form-row"><div><label for="amount">Valor em reais</label><div class="money-input"><span>R$</span><input id="amount" name="amount" placeholder="0,00" inputmode="numeric" maxlength="24" required autocomplete="off" aria-describedby="amount-hint"></div></div><div><label for="category">Categoria</label><select id="category" name="category" required><option value="GROCERIES">Alimentação</option><option value="PHARMA">Saúde</option><option value="AUTO">Locomoção</option><option value="LEISURE">Lazer</option><option value="UNEXPECTED">Imprevistos</option></select></div></div><div class="date-field"><label for="transaction-date">Data do gasto</label><input type="date" id="transaction-date" name="date" min="0001-01-01" max="9999-12-31" required><small class="muted">A data determina o mês em que o gasto aparece no gráfico.</small></div><small id="amount-hint" class="muted">Digite os números: 48122 vira 481,22. A vírgula e os centavos são automáticos.</small><p id="form-error" role="alert" class="form-error" hidden></p><div class="dialog-actions"><button type="button" id="cancel-dialog" class="button secondary">Cancelar</button><button type="submit" id="save-transaction" class="button primary">Salvar gasto</button></div></form></dialog>
+<dialog id="delete-dialog" aria-labelledby="delete-title"><h2 id="delete-title">Excluir gasto?</h2><p id="delete-description"></p><p class="muted">O lançamento será removido e os totais serão atualizados. Essa ação não pode ser desfeita.</p><p id="delete-error" class="form-error" role="alert" hidden></p><div class="dialog-actions"><button type="button" id="cancel-delete" class="button secondary">Cancelar</button><button type="button" id="confirm-delete" class="button primary">Excluir gasto</button></div></dialog>
+<div id="toast" class="toast" role="status" hidden></div>
+<noscript><div class="noscript">Ative o JavaScript para utilizar o painel de gastos.</div></noscript>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+

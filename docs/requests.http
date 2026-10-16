@@ -1,0 +1,49 @@
+@baseUrl = http://localhost:8080
+
+### Health check
+GET {{baseUrl}}/actuator/health
+
+### Cadastro de gasto em centavos
+POST {{baseUrl}}/transactions
+Content-Type: application/json
+
+{"description":"Compra no mercado","category":"GROCERIES","amount":1250}
+
+### Paginação e filtro opcional; primeira página = 0
+GET {{baseUrl}}/transactions?category=GROCERIES&page=0&size=2
+
+### Resumo por categoria
+GET {{baseUrl}}/transactions/GROCERIES/summary
+
+### Validação: deve retornar 400
+POST {{baseUrl}}/transactions
+Content-Type: application/json
+
+{"description":"Valor inválido","category":"AUTO","amount":-1}
+
+### Contrato OpenAPI estático (importe no Postman)
+GET {{baseUrl}}/openapi.yaml
+
+### Substitua pelo UUID retornado no cadastro/listagem
+@transactionId = 00000000-0000-0000-0000-000000000000
+
+### Editar gasto
+PUT {{baseUrl}}/transactions/{{transactionId}}
+Content-Type: application/json
+
+{"description":"Descrição corrigida","category":"LEISURE","amount":3500}
+
+### Excluir gasto (sem corpo na resposta 204)
+DELETE {{baseUrl}}/transactions/{{transactionId}}
+
+### Listagem mensal
+GET {{baseUrl}}/transactions?month=2026-10&page=0&size=10
+
+### Resumo mensal
+GET {{baseUrl}}/transactions/LEISURE/summary?month=2026-10
+
+### Cadastro com data explícita
+POST {{baseUrl}}/transactions
+Content-Type: application/json
+
+{"description":"Cinema","category":"LEISURE","amount":3500,"date":"2026-10-16"}

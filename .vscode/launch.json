@@ -1,0 +1,62 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "java",
+      "name": "Budgeting — Gratuito (sem OpenAI)",
+      "request": "launch",
+      "mainClass": "dio.budgeting.BudgetingApplication",
+      "projectName": "budgeting",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "args": [
+        "--spring.profiles.active=free",
+        "--server.port=18083",
+        "--spring.web.resources.static-locations=file:./src/main/resources/static/,classpath:/static/"
+      ]
+    },
+    {
+      "type": "java",
+      "name": "Budgeting — Demonstração (sem chave)",
+      "request": "launch",
+      "mainClass": "dio.budgeting.BudgetingApplication",
+      "projectName": "budgeting",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "args": [
+        "--spring.profiles.active=demo",
+        "--server.port=18081",
+        "--spring.web.resources.static-locations=file:./src/main/resources/static/,classpath:/static/"
+      ],
+      "env": {
+        "OPENAI_API_KEY": "demo-not-used"
+      }
+    },
+    {
+      "type": "java",
+      "name": "Budgeting — Áudio com OpenAI",
+      "request": "launch",
+      "mainClass": "dio.budgeting.BudgetingApplication",
+      "projectName": "budgeting",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "args": [
+        "--spring.profiles.active=default",
+        "--server.port=18082",
+        "--spring.datasource.url=jdbc:h2:file:./data/audio-test",
+        "--spring.web.resources.static-locations=file:./src/main/resources/static/,classpath:/static/"
+      ],
+      "env": {
+        "OPENAI_API_KEY": "${input:openaiApiKey}"
+      }
+    }
+  ],
+  "inputs": [
+    {
+      "id": "openaiApiKey",
+      "type": "promptString",
+      "description": "Chave da API OpenAI para este teste. Chamadas podem gerar custos.",
+      "password": true
+    }
+  ]
+}
